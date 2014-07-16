@@ -10,7 +10,9 @@ local Players = PlayersAndTeam.players
 local Team = PlayersAndTeam.team
 local ballfactory = require("ball")
 local Ball = ballfactory:create()
-Ball:setToPlayer(Players[1].x, Players[1].y, Players[1].radius, Players[1].key)
+ballPlayer = Players[Team.ballPlayer]
+Ball:grabbedByPlayer(ballPlayer.key)
+Ball:setPosToPlayer(ballPlayer.x, ballPlayer.y, ballPlayer.radius)
 function onPlayBtnRelease()
 	if Team.state ~= "attacking" then
 		Team.state = "attacking"
@@ -32,7 +34,7 @@ local function animate(event)
 	-- ball follows player
 	if Ball.state == "grabbed" then
 		local player = Players[Ball.playerkey]
-		Ball:setToPlayer(player.x, player.y, player.radius, player.key)
+		Ball:setPosToPlayer(player.x, player.y, player.radius)
 	else
 	-- ball moves
 	--	Ball:translate(Ball.v.x/30, Ball.v.y/30)
@@ -132,7 +134,8 @@ function goal()
     player:resetPos()
     player:fadein()
 	end
-  Ball:setToPlayer(Players[1].x, Players[1].y, Players[1].radius, Players[1].key)
+  Ball:grabbedByPlayer(ballPlayer.key)
+  Ball:setPosToPlayer(ballPlayer.x, ballPlayer.y, ballPlayer.radius)
 end
 ---------------------------------
 -- Private functions

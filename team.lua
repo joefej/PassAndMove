@@ -6,7 +6,8 @@ local screenWidth = display.contentWidth
 local team = {
 	color = { r=50/255, g=50/255, b=200/255 },
 	state = "idle",
-	attackingDir = "top"
+	attackingDir = "top",
+  ballPlayer = 1
 }
 
 local playersParam = {
