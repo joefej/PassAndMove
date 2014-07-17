@@ -5,8 +5,8 @@ local screenWidth = display.contentWidth
 
 local team = {
 	color = { r=50/255, g=50/255, b=200/255 },
-	state = "idle",
-	attackingDir = "top",
+	state = STATE.IDLE,
+	attackingDir = ATTACKINGDIR.TOP,
   ballPlayer = 1
 }
 
@@ -15,19 +15,19 @@ local playersParam = {
 	  initpos = Vector:create(100, 560),
 	  attackinitpos = Vector:create(100, 290),
 	  definitpos = Vector:create(100, 690),
-	  state="idle"
+	  state=STATE.IDLE
 	},
 	{ radius=20, speed=45,
 	  initpos = Vector:create(250, 500),
 	  attackinitpos = Vector:create(250, 230),
 	  definitpos = Vector:create(250, 640),
-	  state="idle"
+	  state=STATE.IDLE
 	},
 	{ radius=20, speed=48,
 	  initpos = Vector:create(400, 560),
 	  attackinitpos = Vector:create(400, 300),
 	  definitpos = Vector:create(390, 690),
-	  state="idle"
+	  state=STATE.IDLE
 	}
 }
 
@@ -37,6 +37,11 @@ local Player = {}
 ---------------------------------
 -- Public functions
 ---------------------------------
+function team:setState(newstate)
+  print("Team state changed: ", self.state, "->", newstate)
+  self.state = newstate
+end
+
 function Player:create(key, team, playerParam)
 	local attacktarg = display.newCircle( playerParam.attackinitpos.x, playerParam.attackinitpos.y, playerParam.radius)
 	attacktarg:setFillColor(255/255,255/255,255/255, 1.0 )
@@ -61,7 +66,7 @@ function Player:create(key, team, playerParam)
 	end
 	
 	function listenerAfterMove(obj)
-		obj:setState("idle")
+		obj:setState(STATE.IDLE)
 		obj:setLinearVelocity(0, 0)
 	end
 
@@ -130,7 +135,7 @@ function Player:create(key, team, playerParam)
     	ball.v=pH:sub(pBall)
     	ball.v:inorm(); ball.v:imult(ball.speed)
     	ball:setLinearVelocity(ball.v.x, ball.v.y)
-			ball:setState("idle")
+			ball:setState(STATE.IDLE)
 		else
 			print("nincs megoldas, d<0, d=", d)
 		end
@@ -148,18 +153,18 @@ function Player:create(key, team, playerParam)
 		ball.v= pB:sub(pA)
 		ball.v:inorm(); ball.v:imult(ball.speed)
 		ball:setLinearVelocity(ball.v.x, ball.v.y)
-		ball:setState("idle")
+		ball:setState(STATE.IDLE)
 	end
 	
   function player:resetPos()
     transition.cancel(self)
     self.x = self.initpos.x
     self.y = self.initpos.y
-    self.state = "idle"
+    self.state = STATE.IDLE
   end
   
   function player:fadein()
-    print(self.key, " ", self.x, " ", self.y)
+    print("Player ", self.key, " fadeIn x:", self.x, " y:", self.y)
     self.xScale=0.1
 		self.yScale=0.1
 		transition.to(self, {time=2000, alpha=1.0})

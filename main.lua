@@ -3,6 +3,9 @@
 -- main.lua
 --
 ----------------------------------------------------------------------------------------
+STATE = {IDLE="idle", ATTACK="attacking", DEFEND="defending", GRABBED="grabbed"}
+ATTACKINGDIR = {TOP="top", BOTTOM="bottom"}
+
 local physics = require( "physics" )
 local Vector = require("vector")
 local PlayersAndTeam = require("team")
@@ -14,10 +17,10 @@ ballPlayer = Players[Team.ballPlayer]
 Ball:grabbedByPlayer(ballPlayer.key)
 Ball:setPosToPlayer(ballPlayer.x, ballPlayer.y, ballPlayer.radius)
 function onPlayBtnRelease()
-	if Team.state ~= "attacking" then
-		Team.state = "attacking"
+	if Team.state ~= STATE.ATTACK then
+		Team:setState(STATE.ATTACK)
 	else
-		Team.state = "defending"
+		Team:setState(STATE.DEFEND)
 	end
 	for _,player in ipairs( Players ) do
 		player:removeEventListener("touch", player.onTouchPlayer)
@@ -32,19 +35,11 @@ Hud.Field = Hud:createField(Ball.radius)
 -- Frame Event
 local function animate(event)
 	-- ball follows player
-	if Ball.state == "grabbed" then
+	if Ball.state == STATE.GRABBED then
 		local player = Players[Ball.playerkey]
 		Ball:setPosToPlayer(player.x, player.y, player.radius)
 	else
 	-- ball moves
-	--	Ball:translate(Ball.v.x/30, Ball.v.y/30)
-		-- ball collided with player
-	--	for key,player in ipairs( Players ) do
-	--		if (Ball.playerkey ~= key and Ball:hasCollided(player)) then
-	--			Ball.playerkey = player.key
-	--			Ball:setState("grabbed")
-	--		end
-	--	end
 	end
 end
 
@@ -63,7 +58,7 @@ local function makeDecision()
 	
 	for _,player in ipairs( Players ) do
 		-- player having the ball
-		if (Ball.state=="grabbed" and Ball.playerkey==player.key) and Team.state=="attacking" then
+		if (Ball.state==STATE.GRABBED and Ball.playerkey==player.key) and Team.state==STATE.ATTACK then
 			-- shoot on goal if close to the goalline
 			local goalDist = Vector:create(player.x-Hud.Field:getGoalLineCenter(Team.attackingDir).x, player.y-Hud.Field:getGoalLineCenter(Team.attackingDir).y)
 			if goalDist:len() < 200 then
@@ -78,12 +73,13 @@ local function makeDecision()
 		
 		-- if player is pushed away from target position, move back
 		if (player.state ~= Team.state) then
-			if (Team.state == "attacking") and (((player.x-player.attacktarget.x)^2+(player.y-player.attacktarget.y)^2) > 122) then
-				player:setState("attacking")
+			if (Team.state == STATE.ATTACK) and (((player.x-player.attacktarget.x)^2+(player.y-player.attacktarget.y)^2) > 122) then
+				player:setState(STATE.ATTACK)
 				player:movePlayer(player.attacktarget.x, player.attacktarget.y)
-			elseif (Team.state == "defending") and (((player.x-player.defendtarget.x)^2+(player.y-player.defendtarget.y)^2) > 9) then
-				player:setState("defending")
+			elseif (Team.state == STATE.DEFEND) and (((player.x-player.defendtarget.x)^2+(player.y-player.defendtarget.y)^2) > 9) then
+				player:setState(STATE.DEFEND)
 				player:movePlayer(player.defendtarget.x, player.defendtarget.y)
+      else
 			end
 		end
 	end
@@ -126,9 +122,10 @@ function isOnField(x, y, r)
 end
 
 function goal()
-	print("goal")
+	print("Goal!!!")
+  print("Resetting players position...2s")
 	Hud.Field:incScore("home")
-  --Team.state = "idle"
+  Team:setState(STATE.IDLE)
   -- Return to original position
   for _,player in ipairs( Players ) do
     player:resetPos()
@@ -136,6 +133,12 @@ function goal()
 	end
   Ball:grabbedByPlayer(ballPlayer.key)
   Ball:setPosToPlayer(ballPlayer.x, ballPlayer.y, ballPlayer.radius)
+  timer.performWithDelay(2000, continueDecisionMaking, 1)
+end
+
+function continueDecisionMaking()
+  print("Continue with playing")
+  Team:setState(STATE.ATTACK)
 end
 ---------------------------------
 -- Private functions

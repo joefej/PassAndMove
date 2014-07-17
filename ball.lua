@@ -9,7 +9,7 @@ function BallFactory:create()
   local ball = display.newCircle( 0, 0, radius )
   ball.color = {r=255/255, g=255/255, b=255/255}
   ball.radius=radius
-  ball.state="idle"
+  ball.state=STATE.IDLE
   ball.playerkey=0
   ball.v=Vector:create(0, 0)
   -- pixel/sec
@@ -20,7 +20,7 @@ function BallFactory:create()
   -- Public functions
   ---------------------------------
   function ball:grabbedByPlayer(playerkey)
-    ball.state = "grabbed"
+    ball.state = STATE.GRABBED
     ball.playerkey = playerkey
   end
   function ball:setPosToPlayer(playerx, playery, playerradius)
