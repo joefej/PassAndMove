@@ -16,7 +16,8 @@ local Ball = ballfactory:create()
 ballPlayer = Players[Team.ballPlayer]
 Ball:grabbedByPlayer(ballPlayer.key)
 Ball:setPosToPlayer(ballPlayer.x, ballPlayer.y, ballPlayer.radius)
-function onPlayBtnRelease()
+
+function onStartBtnRelease()
 	if Team.state ~= STATE.ATTACK then
 		Team:setState(STATE.ATTACK)
 	else
@@ -40,7 +41,7 @@ local function animate(event)
 		Ball:setPosToPlayer(player.x, player.y, player.radius)
 	else
 	-- ball moves
-	end
+  end
 end
 
 -- Timer listener
@@ -83,6 +84,13 @@ local function makeDecision()
 			end
 		end
 	end
+end
+
+local function incClock()
+  -- update clock
+  if Team.state ~= STATE.IDLE then
+    Hud.Field:incClock(1)
+  end
 end
 
 -- Touch listener
@@ -187,6 +195,7 @@ local function startGame()
 		player:addEventListener("touch", player.onTouchPlayer)
 	end
 	timer.performWithDelay(1000, makeDecision, 0)
+  timer.performWithDelay(1000, incClock, 20)
 	Ball:addEventListener("collision", Ball)
 	Runtime:addEventListener( "enterFrame", animate )
 end

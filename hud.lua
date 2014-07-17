@@ -11,6 +11,7 @@ function Hud:createField(BallRadius)
 	Field.FieldYPosOffsetTop = 40
 	Field.FieldXPosOffset = 30
 	Field.GoalLineSize = 100
+  Field.HalfTime = 60 -- in sec
 	-- Ball diameter
 	local BallDia = BallRadius * 2
 	-- Play Button
@@ -21,18 +22,25 @@ function Hud:createField(BallRadius)
 		default="button.png",
 		over="button-over.png",
 		width=154, height=40,
-		onRelease = onPlayBtnRelease	-- event listener function
+		onRelease = onStartBtnRelease	-- event listener function
 	}
 	playBtn.x = display.contentWidth*0.5
 	playBtn.y = display.contentHeight - HudYPosOffset
 	Field:insert(playBtn)
 	-- Score board
 	Field.homeScore = display.newText({parent=Field, text="0", 
-		x=display.contentWidth*0.25, y=display.contentHeight - HudYPosOffset, 
+		x=display.contentWidth*0.1, y=display.contentHeight - HudYPosOffset, 
 		font=native.systemFont, fontSize=26})
 	Field.awayScore = display.newText({parent=Field, text="0", 
-		x=display.contentWidth*0.75, y=display.contentHeight - HudYPosOffset, 
+		x=display.contentWidth*0.1+40, y=display.contentHeight - HudYPosOffset, 
 		font=native.systemFont, fontSize=26})
+  Field.Score = display.newText({parent=Field, text="-", 
+		x=display.contentWidth*0.1+20, y=display.contentHeight - HudYPosOffset, 
+		font=native.systemFont, fontSize=26})
+  -- Clock
+  Field.Clock = display.newText({parent=Field, text="0:00",
+      x=display.contentWidth*0.9, y=display.contentHeight - HudYPosOffset,
+      font=native.systemFont, fontSize=26})
 	-- Sideline
 	local Sideline = display.newLine(Field, Field.FieldXPosOffset, Field.FieldYPosOffsetTop, display.contentWidth-Field.FieldXPosOffset, Field.FieldYPosOffsetTop)
 	Sideline:append(display.contentWidth-Field.FieldXPosOffset, display.contentHeight-Field.FieldYPosOffsetBottom, Field.FieldXPosOffset,  display.contentHeight-Field.FieldYPosOffsetBottom, Field.FieldXPosOffset, Field.FieldYPosOffsetTop)
@@ -128,12 +136,17 @@ function Hud:createField(BallRadius)
 	
 	function Field:incScore(score)
 		if (score == "home") then
-			Field.homeScore.text = Field.homeScore.text + 1
+			self.homeScore.text = self.homeScore.text + 1
 		elseif (score == "away") then
-			Field.awayScore.text = Field.awayScore.text + 1
+			self.awayScore.text = self.awayScore.text + 1
 		end
 	end
 	
+  function Field:incClock(sec)
+    print("Clock is updated with ", sec)
+    self.Clock.text = sec/self.HalfTime*45
+  end
+  
 	return Field
 end
 
