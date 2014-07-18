@@ -2,7 +2,9 @@ local widget = require "widget"
 local Vector = require "vector"
 local Hud = {}
 
-function Hud:createField(BallRadius)
+-- BallRadius: in pixel
+-- halftime: in sec
+function Hud:createField(BallRadius, halftime)
 	local Field = display.newGroup()
 	-- Hud pixel from bottom
 	local HudYPosOffset = 30
@@ -11,7 +13,7 @@ function Hud:createField(BallRadius)
 	Field.FieldYPosOffsetTop = 40
 	Field.FieldXPosOffset = 30
 	Field.GoalLineSize = 100
-  Field.HalfTime = 60 -- in sec
+  Field.HalfTime = halftime -- in sec
 	-- Ball diameter
 	local BallDia = BallRadius * 2
 	-- Play Button
@@ -41,6 +43,8 @@ function Hud:createField(BallRadius)
   Field.Clock = display.newText({parent=Field, text="0:00",
       x=display.contentWidth*0.9, y=display.contentHeight - HudYPosOffset,
       font=native.systemFont, fontSize=26})
+  Field.Clock.min = 0
+  Field.Clock.sec = 0
 	-- Sideline
 	local Sideline = display.newLine(Field, Field.FieldXPosOffset, Field.FieldYPosOffsetTop, display.contentWidth-Field.FieldXPosOffset, Field.FieldYPosOffsetTop)
 	Sideline:append(display.contentWidth-Field.FieldXPosOffset, display.contentHeight-Field.FieldYPosOffsetBottom, Field.FieldXPosOffset,  display.contentHeight-Field.FieldYPosOffsetBottom, Field.FieldXPosOffset, Field.FieldYPosOffsetTop)
@@ -143,8 +147,15 @@ function Hud:createField(BallRadius)
 	end
 	
   function Field:incClock(sec)
-    print("Clock is updated with ", sec)
-    self.Clock.text = sec/self.HalfTime*45
+    local deltasec = sec/self.HalfTime*45*60
+    local currsec = self.Clock.min*60 + self.Clock.sec + deltasec
+    self.Clock.min = math.floor(currsec / 60)
+    self.Clock.sec = math.floor(currsec - self.Clock.min * 60)
+    if self.Clock.sec < 10 then
+      self.Clock.text = self.Clock.min .. ":0" .. self.Clock.sec
+    else
+      self.Clock.text = self.Clock.min .. ":" .. self.Clock.sec
+    end
   end
   
 	return Field

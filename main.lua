@@ -5,6 +5,8 @@
 ----------------------------------------------------------------------------------------
 STATE = {IDLE="idle", ATTACK="attacking", DEFEND="defending", GRABBED="grabbed"}
 ATTACKINGDIR = {TOP="top", BOTTOM="bottom"}
+local clockRefreshRate = 50 -- milisec
+local HalfTime = 30 -- 1 min half-time
 
 local physics = require( "physics" )
 local Vector = require("vector")
@@ -31,7 +33,7 @@ function onStartBtnRelease()
 end	
 	
 local Hud = require("hud")
-Hud.Field = Hud:createField(Ball.radius)
+Hud.Field = Hud:createField(Ball.radius, HalfTime)
 
 -- Frame Event
 local function animate(event)
@@ -89,7 +91,7 @@ end
 local function incClock()
   -- update clock
   if Team.state ~= STATE.IDLE then
-    Hud.Field:incClock(1)
+    Hud.Field:incClock(clockRefreshRate/1000)
   end
 end
 
@@ -195,7 +197,7 @@ local function startGame()
 		player:addEventListener("touch", player.onTouchPlayer)
 	end
 	timer.performWithDelay(1000, makeDecision, 0)
-  timer.performWithDelay(1000, incClock, 20)
+  timer.performWithDelay(clockRefreshRate, incClock, 0)
 	Ball:addEventListener("collision", Ball)
 	Runtime:addEventListener( "enterFrame", animate )
 end
