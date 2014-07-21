@@ -3,10 +3,16 @@
 -- main.lua
 --
 ----------------------------------------------------------------------------------------
-STATE = {IDLE="idle", ATTACK="attacking", DEFEND="defending", GRABBED="grabbed"}
-ATTACKINGDIR = {TOP="top", BOTTOM="bottom"}
-local clockRefreshRate = 50 -- milisec
-local HalfTime = 30 -- 1 min half-time
+STATE = {IDLE="idle",                    -- common state
+  STARTED = "started",                   -- match 
+  ATTACK="attacking", DEFEND="defending", --team
+  GRABBED="grabbed"}                     --ball
+ATTACKINGDIR = {TOP="top", BOTTOM="bottom"} -- team
+HALF = { FIRST = "1st", SECOND = "2nd"}   -- match
+local HalfTime = 10 -- 0.5 min half-time
+local ballRadius = 8 -- in pixels
+local goallineSize = 100 -- in pixels
+local fieldNarowness = 30 -- distance from the side of the screen in pixels
 
 local physics = require( "physics" )
 local Vector = require("vector")
@@ -14,26 +20,33 @@ local PlayersAndTeam = require("team")
 local Players = PlayersAndTeam.players
 local Team = PlayersAndTeam.team
 local ballfactory = require("ball")
-local Ball = ballfactory:create()
+local Ball = ballfactory:create(ballRadius)
 ballPlayer = Players[Team.ballPlayer]
 Ball:grabbedByPlayer(ballPlayer.key)
 Ball:setPosToPlayer(ballPlayer.x, ballPlayer.y, ballPlayer.radius)
+local Match = { state = STATE.IDLE, half = HALF.FIRST,
+  firstHalftimeStartTime=0, firstHalftimeEndTime=0,
+  secondHalftimeStartTime=0, secondHalftimeEndTime=0,
+  lastFrameTime=0}
 
 function onStartBtnRelease()
-	if Team.state ~= STATE.ATTACK then
-		Team:setState(STATE.ATTACK)
-	else
-		Team:setState(STATE.DEFEND)
-	end
+  Match.state = STATE.STARTED
 	for _,player in ipairs( Players ) do
 		player:removeEventListener("touch", player.onTouchPlayer)
 	end
-	print("Game Started: ", Team.state)
+  local currTime = os.clock()
+  if Match.half == HALF.FIRST then
+    Match.firstHalftimeStartTime = currTime
+  else
+    Match.secondHalftimeStartTime = currTime
+  end
+  Match.lastFrameTime = currTime
+  print(Match.half, " Halftime Started: ", currTime)
 	return true
 end	
 	
 local Hud = require("hud")
-Hud.Field = Hud:createField(Ball.radius, HalfTime)
+Hud.Field = Hud:createField(Ball.radius, HalfTime, goallineSize, fieldNarowness)
 
 -- Frame Event
 local function animate(event)
@@ -44,6 +57,15 @@ local function animate(event)
 	else
 	-- ball moves
   end
+  
+  -- update clock
+  local currTime = os.clock()
+  if Match.state ~= STATE.IDLE then
+    if Match.lastFrameTime ~= 0 then
+      incClock(currTime-Match.lastFrameTime)
+    end
+  end
+  Match.lastFrameTime = currTime
 end
 
 -- Timer listener
@@ -58,40 +80,50 @@ local function makeDecision()
 		end
 	end
 ]]--
-	
-	for _,player in ipairs( Players ) do
-		-- player having the ball
-		if (Ball.state==STATE.GRABBED and Ball.playerkey==player.key) and Team.state==STATE.ATTACK then
-			-- shoot on goal if close to the goalline
-			local goalDist = Vector:create(player.x-Hud.Field:getGoalLineCenter(Team.attackingDir).x, player.y-Hud.Field:getGoalLineCenter(Team.attackingDir).y)
-			if goalDist:len() < 200 then
-				player:shoot(display.contentWidth*0.5-60, 20, display.contentWidth*0.5+60, 20, Ball)
-			else
-				-- makes pass to the closest teammate to the goal
-				player:passToPlayer(Players[Players:getClosestPlayerKey(display.contentWidth*0.5, 0, -1)], Ball)
-			end
-		else
-		-- player not having the ball
-		end
+	if Match.state ~= STATE.IDLE then
+	  for _,player in ipairs( Players ) do
+		  -- player having the ball
+		  if (Ball.state==STATE.GRABBED and Ball.playerkey==player.key) and Team.state==STATE.ATTACK then
+			  -- shoot on goal if close to the goalline
+			  local goalDist = Vector:create(player.x-Hud.Field:getGoalLineCenter(Team.attackingDir).x, player.y-Hud.Field:getGoalLineCenter(Team.attackingDir).y)
+			  if goalDist:len() < 200 then
+				  player:shoot(display.contentWidth*0.5-60, 20, display.contentWidth*0.5+60, 20, Ball)
+			  else
+				  -- makes pass to the closest teammate to the goal
+				  player:passToPlayer(Players[Players:getClosestPlayerKey(display.contentWidth*0.5, 0, -1)], Ball)
+			  end
+		  else
+		  -- player not having the ball
+		  end
 		
-		-- if player is pushed away from target position, move back
-		if (player.state ~= Team.state) then
-			if (Team.state == STATE.ATTACK) and (((player.x-player.attacktarget.x)^2+(player.y-player.attacktarget.y)^2) > 122) then
-				player:setState(STATE.ATTACK)
-				player:movePlayer(player.attacktarget.x, player.attacktarget.y)
-			elseif (Team.state == STATE.DEFEND) and (((player.x-player.defendtarget.x)^2+(player.y-player.defendtarget.y)^2) > 9) then
-				player:setState(STATE.DEFEND)
-				player:movePlayer(player.defendtarget.x, player.defendtarget.y)
-      else
-			end
-		end
+		  -- if player is pushed away from target position, move back
+		  if (player.state ~= Team.state) then
+			  if (Team.state == STATE.ATTACK) and (((player.x-player.attacktarget.x)^2+(player.y-player.attacktarget.y)^2) > 122) then
+				  player:setState(STATE.ATTACK)
+				  player:movePlayer(player.attacktarget.x, player.attacktarget.y)
+			  elseif (Team.state == STATE.DEFEND) and (((player.x-player.defendtarget.x)^2+(player.y-player.defendtarget.y)^2) > 9) then
+				  player:setState(STATE.DEFEND)
+				  player:movePlayer(player.defendtarget.x, player.defendtarget.y)
+       else
+         -- do nothing
+			  end
+		  end
+    end
 	end
 end
 
-local function incClock()
-  -- update clock
-  if Team.state ~= STATE.IDLE then
-    Hud.Field:incClock(clockRefreshRate/1000)
+function incClock(elapsedtime) -- in sec
+  if Match.state ~= STATE.IDLE then
+    if Match.half == HALF.FIRST and Hud.Field:returnMin() >= 45 then
+      -- half-time
+      halftime()
+    elseif Match.half == HALF.SECOND and Hud.Field:returnMin() >= 90 then
+      -- end match
+      endmatch()
+    else
+      -- update clock
+      Hud.Field:incClock(elapsedtime)
+    end
   end
 end
 
@@ -119,7 +151,7 @@ function onTouchPlayerTarget(event, targettype)
 			display.getCurrentStage():setFocus( nil )
 			t.isFocus = false
 			print("Target ", Players[t.key].key, " moved x: ", t.x, " y: ", t.y)
-			if Team.state == targettype then
+			if Match.state~=STATE.IDLE and Team.state == targettype then
 				Players[t.key]:movePlayer(t.x, t.y)
 			end
 		end
@@ -133,9 +165,34 @@ end
 
 function goal()
 	print("Goal!!!")
+  Hud.Field:incScore("home")
+  resetPlayersPosition()
+  timer.performWithDelay(2000, continueMatch, 1)
+end
+
+function halftime()
+  Match.firstHalftimeEndTime = os.clock()
+  print(Match.half, " halftime ended:", Match.firstHalftimeEndTime)
+  resetPlayersPosition()
+  timer.performWithDelay(10, pauseMatch, 1)
+  Match.half = HALF.SECOND
+  Hud.Field:setClock(45, 0)
+  Match.lastFrameTime = 0
+  for _,player in ipairs( Players ) do
+		-- eventlisteners
+		player:addEventListener("touch", player.onTouchPlayer)
+	end
+end
+
+function endmatch()
+  Match.secondHalftimeEndTime = os.clock()
+  print(Match.half, " halftime ended:", Match.secondHalftimeEndTime)
+  timer.performWithDelay(10, pauseMatch, 1)
+end
+
+function resetPlayersPosition()
   print("Resetting players position...2s")
-	Hud.Field:incScore("home")
-  Team:setState(STATE.IDLE)
+  pauseMatch()
   -- Return to original position
   for _,player in ipairs( Players ) do
     player:resetPos()
@@ -143,12 +200,21 @@ function goal()
 	end
   Ball:grabbedByPlayer(ballPlayer.key)
   Ball:setPosToPlayer(ballPlayer.x, ballPlayer.y, ballPlayer.radius)
-  timer.performWithDelay(2000, continueDecisionMaking, 1)
 end
 
-function continueDecisionMaking()
+function continueMatch()
   print("Continue with playing")
-  Team:setState(STATE.ATTACK)
+  Match.state = STATE.STARTED
+end
+
+function pauseMatch()
+  print("Match is paused")
+  Match.state = STATE.IDLE
+end
+
+function startMatch()
+  print("Match is started")
+  Match.state = STATE.STARTED
 end
 ---------------------------------
 -- Private functions
@@ -187,7 +253,7 @@ local function setPhysics()
 
 end
 
-local function startGame()
+local function startMatch()
 	for _,player in ipairs( Players ) do
 		-- fade in
 		player:fadein()
@@ -196,8 +262,7 @@ local function startGame()
 		player.defendtarget:addEventListener("touch", onTouchPlayerTargetDefend)
 		player:addEventListener("touch", player.onTouchPlayer)
 	end
-	timer.performWithDelay(1000, makeDecision, 0)
-  timer.performWithDelay(clockRefreshRate, incClock, 0)
+  timer.performWithDelay(1000, makeDecision, 0)
 	Ball:addEventListener("collision", Ball)
 	Runtime:addEventListener( "enterFrame", animate )
 end
@@ -210,6 +275,6 @@ display.setDefault( "background", 0, 150/255, 0 )
 -- Set physics
 setPhysics()
 
-startGame()
+startMatch()
 
 

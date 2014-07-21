@@ -5,7 +5,7 @@ local screenWidth = display.contentWidth
 
 local team = {
 	color = { r=50/255, g=50/255, b=200/255 },
-	state = STATE.IDLE,
+	state = STATE.ATTACK,
 	attackingDir = ATTACKINGDIR.TOP,
   ballPlayer = 1
 }

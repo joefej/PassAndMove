@@ -4,15 +4,15 @@ local Hud = {}
 
 -- BallRadius: in pixel
 -- halftime: in sec
-function Hud:createField(BallRadius, halftime)
+function Hud:createField(BallRadius, halftime, goallineSize, narowness)
 	local Field = display.newGroup()
 	-- Hud pixel from bottom
 	local HudYPosOffset = 30
 	-- Field constants
 	Field.FieldYPosOffsetBottom = HudYPosOffset + 60
 	Field.FieldYPosOffsetTop = 40
-	Field.FieldXPosOffset = 30
-	Field.GoalLineSize = 100
+	Field.FieldXPosOffset = narowness
+	Field.GoalLineSize = goallineSize
   Field.HalfTime = halftime -- in sec
 	-- Ball diameter
 	local BallDia = BallRadius * 2
@@ -145,17 +145,39 @@ function Hud:createField(BallRadius, halftime)
 			self.awayScore.text = self.awayScore.text + 1
 		end
 	end
-	
-  function Field:incClock(sec)
-    local deltasec = sec/self.HalfTime*45*60
-    local currsec = self.Clock.min*60 + self.Clock.sec + deltasec
-    self.Clock.min = math.floor(currsec / 60)
-    self.Clock.sec = math.floor(currsec - self.Clock.min * 60)
+  
+  function Field:refreshClockText()
     if self.Clock.sec < 10 then
       self.Clock.text = self.Clock.min .. ":0" .. self.Clock.sec
     else
       self.Clock.text = self.Clock.min .. ":" .. self.Clock.sec
     end
+  end
+  
+  function Field: returnMin()
+    return self.Clock.min
+  end
+  
+  function Field:setClockFromHalftime(elapsedtime, halftime)
+    local deltasec = elapsedtime/self.HalfTime*45*60
+    if halftime == HALF.FIRST then
+      self:setClock(math.floor(deltasec/60), math.floor(deltasec-(math.floor(deltasec/60)*60)))
+    else
+      self:setClock(math.floor(deltasec/60)+45, math.floor(deltasec-(math.floor(deltasec/60)*60)))
+    end
+  end
+  
+  function Field:incClock(elapsedTime)
+    local deltasec = elapsedTime/self.HalfTime*45*60
+    local newsec = self.Clock.min*60 + self.Clock.sec + deltasec
+    --print(deltasec, " ", newsec, " ", math.floor(newsec/60), " ", math.floor(newsec-(math.floor(newsec/60)*60)))
+    self:setClock(math.floor(newsec/60), math.floor(newsec-(math.floor(newsec/60)*60)))
+  end
+  
+  function Field:setClock(min, sec)
+    self.Clock.min = min
+    self.Clock.sec = sec
+    self:refreshClockText()
   end
   
 	return Field

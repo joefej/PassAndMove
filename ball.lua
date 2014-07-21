@@ -4,8 +4,8 @@ local screenWidth = display.contentWidth
 
 local BallFactory = {}
 
-function BallFactory:create()
-  local radius = 8
+function BallFactory:create(ballRadius)
+  local radius = ballRadius
   local ball = display.newCircle( 0, 0, radius )
   ball.color = {r=255/255, g=255/255, b=255/255}
   ball.radius=radius
