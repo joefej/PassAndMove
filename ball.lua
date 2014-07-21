@@ -61,10 +61,10 @@ function BallFactory:create(ballRadius)
         timer.performWithDelay(10, self:grabbedByPlayer(player.key))
 		  elseif (event.other.label == "corner") or (event.other.label == "goalnet") or (event.other.label == "touch") then
 			  print("Ball collided with sensor: ", event.other.label)
-			  timer.performWithDelay(10, self:setLinearVelocity(0, 0))
+			  timer.performWithDelay(10, ballout())
 		  elseif (event.other.label == "goalline") then
 			  print("Ball collided with sensor: ", event.other.label)
-			  timer.performWithDelay(10, goal)
+			  timer.performWithDelay(50, goal())
       else
         print("Error: Collision with unknown object")
 		  end

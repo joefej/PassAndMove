@@ -7,7 +7,6 @@ STATE = {IDLE="idle",                    -- common state
   STARTED = "started",                   -- match 
   ATTACK="attacking", DEFEND="defending", --team
   GRABBED="grabbed"}                     --ball
-ATTACKINGDIR = {TOP="top", BOTTOM="bottom"} -- team
 HALF = { FIRST = "1st", SECOND = "2nd"}   -- match
 local HalfTime = 10 -- 0.5 min half-time
 local ballRadius = 8 -- in pixels
@@ -31,6 +30,7 @@ local Match = { state = STATE.IDLE, half = HALF.FIRST,
 
 function onStartBtnRelease()
   Match.state = STATE.STARTED
+  Team.ballPlayer = Ball.playerkey
 	for _,player in ipairs( Players ) do
 		player:removeEventListener("touch", player.onTouchPlayer)
 	end
@@ -162,12 +162,23 @@ end
 function isOnField(x, y, r)
 	return Hud.Field:isOnField(x, y, r)
 end
+function isOnOwnHalf(x, y, r)
+  return Hud.Field:isOnOwnHalf(x, y, r)
+end
 
 function goal()
 	print("Goal!!!")
   Hud.Field:incScore("home")
-  resetPlayersPosition()
+  timer.performWithDelay(10, resetPlayersPosition(), 1)
   timer.performWithDelay(2000, continueMatch, 1)
+end
+
+function ballout()
+  timer.performWithDelay(10, pauseMatch, 1)
+  -- stopping the ball
+  timer.performWithDelay(10, Ball:setLinearVelocity(0, 0), 1)
+  resetPlayersPosition()
+  timer.performWithDelay(1000, continueMatch, 1)
 end
 
 function halftime()
@@ -187,19 +198,23 @@ end
 function endmatch()
   Match.secondHalftimeEndTime = os.clock()
   print(Match.half, " halftime ended:", Match.secondHalftimeEndTime)
-  timer.performWithDelay(10, pauseMatch, 1)
+  pauseMatch()
+  for _,player in ipairs( Players ) do
+    transition.cancel(player)
+	end
+  Ball:removeEventListener("collision", Ball)
 end
 
 function resetPlayersPosition()
   print("Resetting players position...2s")
-  pauseMatch()
+  timer.performWithDelay(10, pauseMatch, 1)
   -- Return to original position
   for _,player in ipairs( Players ) do
-    player:resetPos()
-    player:fadein()
+    timer.performWithDelay(10, player:resetPos(), 1)
+    timer.performWithDelay(10, player:fadein(), 1)
 	end
-  Ball:grabbedByPlayer(ballPlayer.key)
-  Ball:setPosToPlayer(ballPlayer.x, ballPlayer.y, ballPlayer.radius)
+  timer.performWithDelay(10, Ball:grabbedByPlayer(ballPlayer.key), 1)
+  timer.performWithDelay(10, Ball:setPosToPlayer(ballPlayer.x, ballPlayer.y, ballPlayer.radius), 1)
 end
 
 function continueMatch()

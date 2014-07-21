@@ -6,7 +6,6 @@ local screenWidth = display.contentWidth
 local team = {
 	color = { r=50/255, g=50/255, b=200/255 },
 	state = STATE.ATTACK,
-	attackingDir = ATTACKINGDIR.TOP,
   ballPlayer = 1
 }
 
@@ -86,7 +85,7 @@ function Player:create(key, team, playerParam)
 			t.isFocus = true
 		elseif t.isFocus then
 			if event.phase == "moved" then
-				if isOnField(event.x, event.y, t.radius) then
+				if isOnOwnHalf(event.x, event.y, t.radius) then
 					t.x = event.x
 					t.y = event.y
 				end

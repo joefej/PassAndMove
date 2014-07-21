@@ -118,12 +118,8 @@ function Hud:createField(BallRadius, halftime, goallineSize, narowness)
 	Field.Sensors[8].label = "goalline"
 	Field.Sensors[8]:setFillColor(goalGreyColor)
 	
-	function Field:getGoalLineCenter(attackingDir)
-		if (attackingDir == "top") then
-			return Vector:create(display.contentWidth*0.5, self.FieldYPosOffsetTop)
-		else
-			return Vector:create(display.contentWidth*0.5, self.FieldYPosOffsetBottom)
-		end
+	function Field:getGoalLineCenter()
+		return Vector:create(display.contentWidth*0.5, self.FieldYPosOffsetTop)
 	end
 	
 	function Field:getLeftPost()
@@ -138,6 +134,15 @@ function Hud:createField(BallRadius, halftime, goallineSize, narowness)
 		end
 	end
 	
+  function Field:isOnOwnHalf(x, y, r)
+    -- bottom half is the own half
+    if self:isOnField(x, y, r) and y > display.contentHeight/2-self.FieldYPosOffsetBottom/2-r+self.FieldYPosOffsetTop/2 then
+      return true
+    else
+      return false
+    end
+  end
+  
 	function Field:incScore(score)
 		if (score == "home") then
 			self.homeScore.text = self.homeScore.text + 1
