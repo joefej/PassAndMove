@@ -307,5 +307,3 @@ display.setDefault( "background", 0, 150/255, 0 )
 setPhysics()
 
 startMatch()
-
-

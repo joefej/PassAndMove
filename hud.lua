@@ -81,7 +81,13 @@ function Hud:createField(BallRadius, halftime, goallineSize, narowness)
 	-- Back of goal
 	Field.TopGoal.BackNet = display.newRect(display.contentWidth*0.5, Field.FieldYPosOffsetTop-netDepth, Field.GoalLineSize, netWidth)
 	Field.TopGoal.BackNet.label = "goalnet"
-	-- Sensors
+  -- Center of the pitch
+  Field.KickoffSpot = display.newCircle(Field, display.contentWidth*0.5, display.contentHeight/2-Field.FieldYPosOffsetBottom/2+Field.FieldYPosOffsetTop/2, 5)
+	Field.KickoffSpot:toBack()
+  Field.HalfLine = display.newLine(Field, Field.FieldXPosOffset, display.contentHeight/2-Field.FieldYPosOffsetBottom/2+Field.FieldYPosOffsetTop/2, display.contentWidth-Field.FieldXPosOffset, display.contentHeight/2-Field.FieldYPosOffsetBottom/2+Field.FieldYPosOffsetTop/2)
+  Field.HalfLine.strokeWidth = 5
+  Field.HalfLine:toBack()
+  -- Sensors
 	Field.Sensors = {}
 	local sensorWidth = 10
 	local sensorHeight = display.contentHeight-Field.FieldYPosOffsetBottom-Field.FieldYPosOffsetTop+2*BallDia
