@@ -6,7 +6,8 @@
 STATE = {IDLE="idle",                    -- common state
   STARTED = "started",                   -- match 
   ATTACK="attacking", DEFEND="defending", --team
-  GRABBED="grabbed"}                     --ball
+  GRABBED="grabbed", GOAL = "goal", OUT = "out", GRABBING = "grabbing",--ball
+  param = -1}
 HALF = { FIRST = "1st", SECOND = "2nd"}   -- match
 local HalfTime = 10 -- 0.5 min half-time
 local ballRadius = 8 -- in pixels
@@ -50,6 +51,20 @@ Hud.Field = Hud:createField(Ball.radius, HalfTime, goallineSize, fieldNarowness)
 
 -- Frame Event
 local function animate(event)
+  -- ball collision handler
+  if Ball.state == STATE.GOAL then
+    Ball:setState(STATE.IDLE)
+    goal()
+  elseif Ball.state == STATE.OUT then
+    Ball:setState(STATE.IDLE)
+    ballout()
+  elseif Ball.state == STATE.GRABBING then
+    Ball:grabbedByPlayer(STATE.param)
+    if Match.STATE == STATE.IDLE then
+      Team.ballPlayer = STATE.param
+    end
+  end
+  
 	-- ball follows player
 	if Ball.state == STATE.GRABBED then
 		local player = Players[Ball.playerkey]
@@ -169,23 +184,23 @@ end
 function goal()
 	print("Goal!!!")
   Hud.Field:incScore("home")
-  timer.performWithDelay(10, resetPlayersPosition(), 1)
+  resetPlayersPosition()
   timer.performWithDelay(2000, continueMatch, 1)
 end
 
 function ballout()
-  timer.performWithDelay(10, pauseMatch, 1)
+  --timer.performWithDelay(10, pauseMatch, 1)
   -- stopping the ball
-  timer.performWithDelay(10, Ball:setLinearVelocity(0, 0), 1)
+  Ball:setLinearVelocity(0, 0)
   resetPlayersPosition()
-  timer.performWithDelay(1000, continueMatch, 1)
+  continueMatch()
 end
 
 function halftime()
   Match.firstHalftimeEndTime = os.clock()
   print(Match.half, " halftime ended:", Match.firstHalftimeEndTime)
   resetPlayersPosition()
-  timer.performWithDelay(10, pauseMatch, 1)
+  --timer.performWithDelay(10, pauseMatch, 1)
   Match.half = HALF.SECOND
   Hud.Field:setClock(45, 0)
   Match.lastFrameTime = 0
@@ -207,14 +222,15 @@ end
 
 function resetPlayersPosition()
   print("Resetting players position...2s")
-  timer.performWithDelay(10, pauseMatch, 1)
+  pauseMatch()
   -- Return to original position
   for _,player in ipairs( Players ) do
-    timer.performWithDelay(10, player:resetPos(), 1)
-    timer.performWithDelay(10, player:fadein(), 1)
+    player:resetPos()
+    player:fadein()
 	end
-  timer.performWithDelay(10, Ball:grabbedByPlayer(ballPlayer.key), 1)
-  timer.performWithDelay(10, Ball:setPosToPlayer(ballPlayer.x, ballPlayer.y, ballPlayer.radius), 1)
+  ballPlayer = Players[Team.ballPlayer]
+  Ball:grabbedByPlayer(ballPlayer.key)
+  Ball:setPosToPlayer(ballPlayer.x, ballPlayer.y, ballPlayer.radius)
 end
 
 function continueMatch()

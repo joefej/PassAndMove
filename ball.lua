@@ -20,8 +20,9 @@ function BallFactory:create(ballRadius)
   -- Public functions
   ---------------------------------
   function ball:grabbedByPlayer(playerkey)
-    ball.state = STATE.GRABBED
-    ball.playerkey = playerkey
+    self.playerkey = playerkey
+    print("Ball playerkey set to", self.playerkey)
+    self:setState(STATE.GRABBED)
   end
   function ball:setPosToPlayer(playerx, playery, playerradius)
     self:setPos(playerx, playery-playerradius-self.radius)
@@ -57,14 +58,17 @@ function BallFactory:create(ballRadius)
 	  if (event.phase == "began") then
 		  if (event.other.label == "player") then
 			  local player = event.other
-        print("Ball collided with Player ", player.key)
-        timer.performWithDelay(10, self:grabbedByPlayer(player.key))
+        if player.key ~= self.playerkey then
+          print("Ball collided with Player ", player.key)
+          self:setState(STATE.GRABBING)
+          STATE.param = player.key
+        end
 		  elseif (event.other.label == "corner") or (event.other.label == "goalnet") or (event.other.label == "touch") then
 			  print("Ball collided with sensor: ", event.other.label)
-			  timer.performWithDelay(10, ballout())
+			  self:setState(STATE.OUT)
 		  elseif (event.other.label == "goalline") then
 			  print("Ball collided with sensor: ", event.other.label)
-			  timer.performWithDelay(50, goal())
+        self:setState(STATE.GOAL)
       else
         print("Error: Collision with unknown object")
 		  end
