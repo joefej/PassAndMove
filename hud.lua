@@ -83,10 +83,8 @@ function Hud:createField(BallRadius, halftime, goallineSize, narowness)
 	Field.TopGoal.BackNet.label = "goalnet"
   -- Center of the pitch
   Field.KickoffSpot = display.newCircle(Field, display.contentWidth*0.5, display.contentHeight/2-Field.FieldYPosOffsetBottom/2+Field.FieldYPosOffsetTop/2, 5)
-	Field.KickoffSpot:toBack()
   Field.HalfLine = display.newLine(Field, Field.FieldXPosOffset, display.contentHeight/2-Field.FieldYPosOffsetBottom/2+Field.FieldYPosOffsetTop/2, display.contentWidth-Field.FieldXPosOffset, display.contentHeight/2-Field.FieldYPosOffsetBottom/2+Field.FieldYPosOffsetTop/2)
   Field.HalfLine.strokeWidth = 5
-  Field.HalfLine:toBack()
   -- Sensors
 	Field.Sensors = {}
 	local sensorWidth = 10
@@ -123,6 +121,8 @@ function Hud:createField(BallRadius, halftime, goallineSize, narowness)
 	Field.Sensors[8] = display.newRect(display.contentWidth*0.5, display.contentHeight-Field.FieldYPosOffsetBottom+BallDia+sensorHeight/2, sensorWidth, sensorHeight)
 	Field.Sensors[8].label = "goalline"
 	Field.Sensors[8]:setFillColor(goalGreyColor)
+  -- send Field object group back
+  Field:toBack()
 	
 	function Field:getGoalLineCenter()
 		return Vector:create(display.contentWidth*0.5, self.FieldYPosOffsetTop)
